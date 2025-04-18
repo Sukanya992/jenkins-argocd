@@ -51,6 +51,7 @@ pipeline {
                     // Change to the directory containing the Terraform configuration files
                     dir('terraform') {
                         sh '''
+                        terraform destroy --auto-approve
                         terraform init
                         terraform plan
                         terraform apply --auto-approve
