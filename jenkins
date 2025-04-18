@@ -67,11 +67,12 @@ pipeline {
     steps {
         sh '''
         curl -sSL https://github.com/argoproj/argo-cd/releases/download/v2.4.8/argocd-linux-amd64 -o /tmp/argocd-linux-amd64
-        echo "" | sudo -S mv /tmp/argocd-linux-amd64 /usr/local/bin/argocd
-        sudo chmod +x /usr/local/bin/argocd  # Ensure it's executable
+        sudo mv /tmp/argocd-linux-amd64 /usr/local/bin/argocd  
+        sudo chmod +x /usr/local/bin/argocd  
         '''
     }
 }
+
 
 
         stage('Install Argo CD') {
