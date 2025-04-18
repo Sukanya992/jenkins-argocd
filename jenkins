@@ -64,13 +64,15 @@ pipeline {
             }
         }
         stage('Install Argo CD CLI') {
-            steps {
-                sh '''
-                curl -sSL https://github.com/argoproj/argo-cd/releases/download/v2.4.8/argocd-linux-amd64 -o /usr/local/bin/argocd
-                chmod +x /usr/local/bin/argocd  // Install Argo CD CLI
-                '''
-            }
-        }
+    steps {
+        sh '''
+        curl -sSL https://github.com/argoproj/argo-cd/releases/download/v2.4.8/argocd-linux-amd64 -o /tmp/argocd-linux-amd64
+        sudo mv /tmp/argocd-linux-amd64 /usr/local/bin/argocd
+        sudo chmod +x /usr/local/bin/argocd 
+        '''
+    }
+}
+
         stage('Install Argo CD') {
             steps {
                 script {
