@@ -10,12 +10,6 @@ pipeline {
         SVC = "k8s/svc.yaml"
         ARGOCD_APP_NAME = "argocd-deployment"  // Your Argo CD application name
     }
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm  // Checkout code from the Git repository
-            }
-        }
         stage('Build Docker Image') {
             steps {
                 script {
