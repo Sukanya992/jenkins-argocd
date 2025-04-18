@@ -90,14 +90,6 @@ stage('Update Deployment Files') {
                 '''
             }
         }
-        stage('Deploy to Green') {
-            steps {
-                sh 'kubectl apply -f $DEPLOY'
-                sh 'kubectl apply -f $SVC'
-                sh 'sleep 50'
-                sh 'kubectl get svc'
-            }
-        }
 stage('Sync Argo CD') {
             steps {
                 script {
