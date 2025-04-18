@@ -16,7 +16,3 @@ resource "google_container_cluster" "primary" {
   enable_legacy_abac = false
 }
 
-output "kubeconfig" {
-  value = google_container_cluster.primary.kubeconfig
-}
-
