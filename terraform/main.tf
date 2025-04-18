@@ -1,3 +1,4 @@
+
 provider "google" {
   project = "plated-epigram-452709-h6"
   region  = "us-central1"
@@ -28,20 +29,6 @@ resource "google_container_node_pool" "default_pool" {
   }
 }
 
-# Install Argo CD using Helm
-resource "helm_release" "argocd" {
-  name       = "argocd"
-  namespace  = "argocd"
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argo-cd"
-  version    = "3.20.0"
-
-  set {
-    name  = "server.service.type"
-    value = "LoadBalancer"
-  }
-}
-
 # Kubernetes Namespace for Argo CD
 resource "kubernetes_namespace" "argocd" {
   metadata {
@@ -52,11 +39,9 @@ resource "kubernetes_namespace" "argocd" {
 # Configure the Kubernetes provider to use GKE credentials
 provider "kubernetes" {
   host                   = google_container_cluster.primary.endpoint
-  cluster_ca_certificate = base64decode(google_container_cluster.primary.cluster_ca_certificate)
+  cluster_ca_certificate = base64decode(google_container_cluster.primary.master_auth[0].cluster_ca_certificate)
   token                  = data.google_client_config.default.access_token
 }
-
-# Optionally, if you don't want to use `data.google_client_config`, you can manually provide your kubeconfig and credentials
 
 # Fetch the Google client config to retrieve access token for authentication
 data "google_client_config" "default" {}
