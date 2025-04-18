@@ -4,7 +4,7 @@ provider "google" {
 }
 
 resource "google_container_cluster" "primary" {
-  name     = "primary-cluster"
+  name     = "my-cluster"
   location = "us-central1-c"
 
   initial_node_count = 2
