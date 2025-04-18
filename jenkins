@@ -12,8 +12,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/Sukanya992/jenkins-argocd.git'
-            }
+git branch: 'main', url: 'https://github.com/Sukanya992/jenkins-argocd.git'            }
         }
 
         stage('Build Docker Image') {
