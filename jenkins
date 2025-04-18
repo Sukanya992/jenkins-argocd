@@ -90,5 +90,12 @@ pipeline {
                 sh 'kubectl get svc'
             }
         }
+ stage('Update Deployment Files') {
+            steps {
+                sh '''
+                sed -i "s|image: .*|image: sukanya996/${IMAGE_NAME}:green-${BUILD_NUMBER}|" $DEPLOY
+'''
+            }
+        }
     }
 }
