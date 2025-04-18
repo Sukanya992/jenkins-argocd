@@ -14,5 +14,6 @@ resource "google_container_cluster" "primary" {
   }
 
   enable_legacy_abac = false
+  deletion_protection   = false 
 }
 
