@@ -11,7 +11,7 @@ spec:
   project: default
   source:
     path: k8s
-    repoURL: 
+    repoURL: https://github.com/Sukanya992/jenkins-argocd.git
     targetRevision: main
   syncPolicy:
     automated:
