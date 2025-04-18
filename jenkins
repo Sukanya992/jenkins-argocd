@@ -18,19 +18,15 @@ pipeline {
                 }
             }
         }
-        stage('Push Docker Image') {
+         stages {
+        stage('Docker Login') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', 
                                                   usernameVariable: 'DOCKER_USER', 
                                                   passwordVariable: 'DOCKER_PASS')]) {
-                    script {
-                        // Make sure to tag the image correctly before pushing
-                        def imageTag = "${DOCKER_IMAGE}:${BUILD_NUMBER}"  // Tag the image with the build number
-                        sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${imageTag}  // Push the image to Docker Hub
-                        '''
-                    }
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
                 }
             }
         }
