@@ -51,7 +51,6 @@ pipeline {
                     // Change to the directory containing the Terraform configuration files
                     dir('terraform') {
                         sh '''
-                        terraform destroy --auto-approve
                         terraform init
                         terraform plan
                         terraform apply --auto-approve
@@ -60,6 +59,18 @@ pipeline {
                 }
             }
         }
+stage('Terraform Destroy (Cluster)') {
+    steps {
+        script {
+            dir('terraform') {
+                sh '''
+                terraform destroy --auto-approve
+                '''
+            }
+        }
+    }
+}
+
         stage('Wait for Cluster Access') {
             steps {
                 retry(3) {
