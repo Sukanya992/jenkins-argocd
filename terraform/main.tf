@@ -1,13 +1,13 @@
 provider "google" {
   project = "plated-epigram-452709-h6"
-  zone  = "us-central1-b"
+  zone  = "us-central1-c"
 }
 
 resource "google_container_cluster" "primary" {
   name     = "primary-cluster"
-  location = "us-central1-b"
+  location = "us-central1-c"
 
-  initial_node_count = 3
+  initial_node_count = 2
 
   node_config {
     machine_type = "e2-medium"
