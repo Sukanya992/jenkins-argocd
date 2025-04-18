@@ -7,8 +7,7 @@ pipeline {
         CLUSTER_NAME = "my-cluster"
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-key')
         DEPLOY = "k8s/deploy.yaml"
-        SVC="k8s/svc.yaml"
-    }
+        SVC = "k8s/svc.yaml"
     }
     stages {
         stage('Checkout') {
@@ -32,7 +31,7 @@ pipeline {
                 }
             }
         }
-stage('GCP Login') {
+        stage('GCP Login') {
             steps {
                 withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     sh '''
@@ -43,7 +42,7 @@ stage('GCP Login') {
                 }
             }
         }
-stage('Terraform Apply (Cluster)') {
+        stage('Terraform Apply (Cluster)') {
             steps {
                 script {
                     // Change to the directory containing the Terraform configuration files
@@ -57,7 +56,7 @@ stage('Terraform Apply (Cluster)') {
                 }
             }
         }
-stage('Wait for Cluster Access') {
+        stage('Wait for Cluster Access') {
             steps {
                 retry(3) {
                     sh '''
@@ -75,14 +74,12 @@ stage('Wait for Cluster Access') {
                 }
             }
         }
-stage('Deploy to Green') {
+        stage('Deploy to Green') {
             steps {
                 sh 'kubectl apply -f $DEPLOY'
                 sh 'kubectl apply -f $SVC'
                 sh 'sleep 50'
                 sh 'kubectl get svc'
-                sh 'sleep 20'
-                
             }
         }
     }
