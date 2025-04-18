@@ -8,6 +8,7 @@ pipeline {
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-key')
         DEPLOY = "k8s/deploy.yaml"
         SVC = "k8s/svc.yaml"
+        ARGOCD_APP_NAME = "argocd-deployment"
     }
     stages {
         stage('Checkout') {
@@ -95,6 +96,14 @@ stage('Update Deployment Files') {
                 sh 'kubectl apply -f $SVC'
                 sh 'sleep 50'
                 sh 'kubectl get svc'
+            }
+        }
+stage('Sync Argo CD') {
+            steps {
+                script {
+                    // Sync the Argo CD application using the Argo CD CLI
+                    sh "argocd app sync ${ARGOCD_APP_NAME}"
+                }
             }
         }
     }
