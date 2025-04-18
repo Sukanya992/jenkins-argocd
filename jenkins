@@ -60,12 +60,15 @@ pipeline {
             }
         }
 stage('Terraform Destroy (Cluster)') {
+    when {
+        expression {
+            return params.DESTROY_CLUSTER == true
+        }
+    }
     steps {
         script {
             dir('terraform') {
-                sh '''
-                terraform destroy --auto-approve
-                '''
+                sh 'terraform destroy --auto-approve'
             }
         }
     }
