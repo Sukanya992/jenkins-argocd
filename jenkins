@@ -36,10 +36,12 @@ git branch: 'main', url: 'https://github.com/Sukanya992/jenkins-argocd.git'     
 
         stage('Provision Kubernetes Cluster with Terraform') {
             steps {
-                script {
-                    sh 'terraform init'
-                    sh 'terraform apply -auto-approve'
-                }
+               dir('terraform') {
+            script {
+                sh 'terraform init'
+                sh 'terraform apply -auto-approve'
+            }
+        }
             }
         }
 
