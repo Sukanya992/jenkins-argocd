@@ -82,19 +82,19 @@ pipeline {
         }
     }
 }
+stage('Update Deployment Files') {
+            steps {
+                sh '''
+                sed -i "s|image: .*|image: ${DOCKER_IMAGE}:green-${BUILD_NUMBER}|" $DEPLOY
+                '''
+            }
+        }
         stage('Deploy to Green') {
             steps {
                 sh 'kubectl apply -f $DEPLOY'
                 sh 'kubectl apply -f $SVC'
                 sh 'sleep 50'
                 sh 'kubectl get svc'
-            }
-        }
- stage('Update Deployment Files') {
-            steps {
-                sh '''
-                sed -i "s|image: .*|image: sukanya996/${IMAGE_NAME}:green-${BUILD_NUMBER}|" $DEPLOY
-'''
             }
         }
     }
