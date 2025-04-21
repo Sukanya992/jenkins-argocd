@@ -8,20 +8,20 @@ pipeline {
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-key')
         DEPLOY = "k8s/deploy.yaml"
         SVC = "k8s/svc.yaml"
-        ARGOCD_APP_NAME = "argocd-deployment"  // Your Argo CD application name
+        ARGOCD_APP_NAME = "argocd-deployment"
     }
     stages {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build(DOCKER_IMAGE, 'docker/')  // Build the Docker image
+                    docker.build(DOCKER_IMAGE, 'docker/')
                 }
             }
         }
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub', 
-                                                  usernameVariable: 'DOCKER_USER', 
+                withCredentials([usernamePassword(credentialsId: 'docker-hub',
+                                                  usernameVariable: 'DOCKER_USER',
                                                   passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
@@ -33,8 +33,6 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     sh '''
-                    # Authenticate with Google Cloud
-                    echo "Using credentials from: $GOOGLE_APPLICATION_CREDENTIALS"
                     gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
                     '''
                 }
@@ -42,14 +40,11 @@ pipeline {
         }
         stage('Terraform Apply (Cluster)') {
             steps {
-                script {
-                    dir('terraform') {
-                        sh '''
-                        terraform init
-                        terraform plan
-                        terraform apply --auto-approve  
-                        '''
-                    }
+                dir('terraform') {
+                    sh '''
+                    terraform init
+                    terraform apply --auto-approve
+                    '''
                 }
             }
         }
@@ -63,76 +58,66 @@ pipeline {
                 }
             }
         }
-       stage('Install Argo CD CLI') {
-    steps {
-        script {
-            sh '''
-            mkdir -p ./bin
-            curl -sSL https://github.com/argoproj/argo-cd/releases/download/v2.4.8/argocd-linux-amd64 -o ./bin/argocd
-            chmod +x ./bin/argocd
-            '''
-        }
-        // Use `withEnv` to temporarily update the PATH
-        withEnv(["PATH=${env.WORKSPACE}/bin:${env.PATH}"]) {
-            sh 'argocd version'  // Just to verify installation
-        }
-    }
-}
-
-stage('Argo CD Login') {
-    steps {
-        script {
-            withEnv(["PATH=${env.WORKSPACE}/bin:${env.PATH}"]) {
+        stage('Install Argo CD') {
+            steps {
                 sh '''
-                ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
-                echo "ARGOCD Server IP: $ARGOCD_SERVER"
-                
-                # Wait until the LoadBalancer gets an external IP
-                while [ -z "$ARGOCD_SERVER" ]; do
-                    echo "Waiting for Argo CD LoadBalancer external IP..."
-                    sleep 10
-                    ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
-                done
-
-                export ARGOCD_SERVER
-
-                # Get initial admin password
-                ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret \
-                    -o jsonpath="{.data.password}" | base64 -d)
-
-                # Login to Argo CD CLI
-                argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
+                kubectl create namespace argocd || echo "Namespace exists"
+                kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+                kubectl rollout status deployment/argocd-server -n argocd
+                kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
                 '''
             }
         }
-    }
-}
-
-
-
-        stage('Install Argo CD') {
+        stage('Install Argo CD CLI') {
+            steps {
+                sh '''
+                mkdir -p ./bin
+                curl -sSL https://github.com/argoproj/argo-cd/releases/download/v2.4.8/argocd-linux-amd64 -o ./bin/argocd
+                chmod +x ./bin/argocd
+                '''
+            }
+        }
+        stage('Argo CD Login') {
             steps {
                 script {
-                    sh 'kubectl create namespace argocd || echo "namespace already exists"'  
-                    sh 'kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml'  
-                    sh 'kubectl rollout status deployment/argocd-server -n argocd'  
-                    sh 'kubectl patch svc argocd-server -n argocd -p \'{"spec": {"type": "LoadBalancer"}}\''  
-                    sh 'kubectl -n argocd get secret argocd-initial-admin-secret -o "jsonpath={.data.password}" | base64 -d'  
-                    sh 'kubectl get svc -n argocd' 
+                    withEnv(["PATH=${env.WORKSPACE}/bin:${env.PATH}"]) {
+                        sh '''
+                        echo "Waiting for Argo CD external IP..."
+                        ARGOCD_SERVER=""
+                        until [ ! -z "$ARGOCD_SERVER" ]; do
+                            sleep 10
+                            ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
+                        done
+
+                        echo "Argo CD IP: $ARGOCD_SERVER"
+                        echo $ARGOCD_SERVER > argocd-ip.txt
+
+                        ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret \
+                            -o jsonpath="{.data.password}" | base64 -d)
+
+                        ./bin/argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
+
+                        echo " Argo CD login successful"
+                        ./bin/argocd version
+                        '''
+                    }
                 }
             }
         }
         stage('Update Deployment Files') {
             steps {
                 sh '''
-                sed -i "s|image: .*|image: ${DOCKER_IMAGE}:${BUILD_NUMBER}|" $DEPLOY  
+                sed -i "s|image: .*|image: ${DOCKER_IMAGE}:${BUILD_NUMBER}|" $DEPLOY
                 '''
             }
         }
         stage('Sync Argo CD') {
             steps {
-                script {
-                    sh "argocd app sync ${ARGOCD_APP_NAME} "
+                withEnv(["PATH=${env.WORKSPACE}/bin:${env.PATH}"]) {
+                    sh '''
+                    ARGOCD_SERVER=$(cat argocd-ip.txt)
+                    ./bin/argocd app sync ${ARGOCD_APP_NAME} --server $ARGOCD_SERVER --insecure
+                    '''
                 }
             }
         }
