@@ -63,16 +63,22 @@ pipeline {
                 }
             }
         }
-        stage('Install Argo CD CLI') {
+       stage('Install Argo CD CLI') {
     steps {
-        sh '''
-        mkdir -p ./bin
-        curl -sSL https://github.com/argoproj/argo-cd/releases/download/v2.4.8/argocd-linux-amd64 -o ./bin/argocd
-        chmod +x ./bin/argocd
-        '''
-        env.PATH = "./bin:${env.PATH}"
+        script {
+            sh '''
+            mkdir -p ./bin
+            curl -sSL https://github.com/argoproj/argo-cd/releases/download/v2.4.8/argocd-linux-amd64 -o ./bin/argocd
+            chmod +x ./bin/argocd
+            '''
+        }
+        // Use `withEnv` to temporarily update the PATH
+        withEnv(["PATH=${env.WORKSPACE}/bin:${env.PATH}"]) {
+            sh 'argocd version'  // Just to verify installation
+        }
     }
 }
+
 
 
 
