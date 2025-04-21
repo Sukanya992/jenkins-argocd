@@ -80,6 +80,7 @@ stage('Fetch Argo CD IP') {
             steps {
                 sh '''
                 kubectl get svc argocd-server -n argocd -o 'jsonpath={.status.loadBalancer.ingress[0].ip}'
+                kubectl -n argocd get secret argocd-initial-admin-secret -o 'jsonpath={.data.password}' | base64 -d
                 '''
             }
         }
